@@ -1,5 +1,11 @@
 /**
  * Authentication router
+ * {{CHENGQI:
+ * 操作: 修改;
+ * 时间戳: 2025-10-30;
+ * 原因: [P0-LD-001] 修复密码哈希安全问题;
+ * 应用的原则: SecureCoding-PasswordHashing;
+ * }}
  */
 
 import { users } from "@/db/schema";
@@ -8,6 +14,7 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 
 // JWT Secret
@@ -15,20 +22,30 @@ const JWT_SECRET = new TextEncoder().encode(
   EnvManager.get("JWT_SECRET", "your-secret-key-change-this-in-production")
 );
 
-// Helper: Hash password (simple implementation, use bcrypt in production)
+// {{开始修改}}
+/**
+ * Hash password using bcrypt
+ * @param password - Plain text password
+ * @returns Hashed password
+ */
 export async function hashPassword(password: string): Promise<string> {
-  // TODO: Use proper password hashing (bcrypt, argon2)
-  return `hashed_${password}`;
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
 }
 
-// Helper: Verify password
+/**
+ * Verify password against hash using bcrypt
+ * @param password - Plain text password
+ * @param hash - Hashed password from database
+ * @returns True if password matches
+ */
 export async function verifyPassword(
   password: string,
   hash: string
 ): Promise<boolean> {
-  // TODO: Use proper password verification
-  return hash === `hashed_${password}`;
+  return bcrypt.compare(password, hash);
 }
+// {{结束修改}}
 
 // Helper: Generate JWT
 async function generateToken(userId: string): Promise<string> {

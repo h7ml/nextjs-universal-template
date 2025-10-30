@@ -64,10 +64,15 @@ const db = drizzle(sql, { schema });
 // Import schema types
 const { roles, users, dashboards, widgets, dataSources } = schema;
 
-// Use the same password hashing as auth router (simple implementation)
-function hashPassword(password: string): string {
-  return `hashed_${password}`;
+// {{开始修改}}
+// Use bcrypt for password hashing (same as auth router)
+import bcrypt from "bcryptjs";
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
 }
+// {{结束修改}}
 
 async function seed() {
   console.log("🌱 Starting database seed...\n");
@@ -138,7 +143,7 @@ async function seed() {
       .values({
         email: "admin@example.com",
         username: "admin",
-        password: hashPassword("admin123"),
+        password: await hashPassword("admin123"),
         name: "Administrator",
         roleId: adminRole.id,
         isActive: true,
@@ -155,7 +160,7 @@ async function seed() {
       .values({
         email: "user@example.com",
         username: "testuser",
-        password: hashPassword("user123"),
+        password: await hashPassword("user123"),
         name: "Test User",
         roleId: userRole.id,
         isActive: true,
@@ -172,7 +177,7 @@ async function seed() {
       .values({
         email: "demo@example.com",
         username: "demo",
-        password: hashPassword("demo123"),
+        password: await hashPassword("demo123"),
         name: "Demo User",
         roleId: userRole.id,
         isActive: true,
