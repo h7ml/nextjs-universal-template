@@ -66,12 +66,11 @@ NODE_VERSION=18
 ## 注意事项
 
 1. **Git 集成会复用与 `deploy.sh` 相同的构建流程**
-   - `pnpm pages:build` 在 Cloudflare 构建环境中运行 `pnpm dlx @cloudflare/next-on-pages@1.13.16`
+   - `pnpm pages:build` 在 Cloudflare 构建环境中运行 `npx @cloudflare/next-on-pages`
    - 输出 `.vercel/output/static`，可直接被 Wrangler 和 Dashboard 部署
 
-2. **@cloudflare/next-on-pages 已废弃且未作为仓库依赖**
-   - 适配器仍可用，但未来可能停止维护
-   - 为避免 Vercel 等平台安装依赖时出现 peer 版本冲突，仓库通过 `pnpm dlx` 按需下载该包
+2. **@cloudflare/next-on-pages 已废弃**
+   - 虽然仍可使用，但未来可能停止维护
    - 新项目建议关注 OpenNext 或直接选择 Vercel
 
 3. **动态路由已配置 Edge Runtime**

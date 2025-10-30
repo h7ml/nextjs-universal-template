@@ -490,7 +490,7 @@ vercel --prod
 **Git 集成推荐配置**:
 
 ```text
-Build command: pnpm pages:build   # 生成 .vercel/output/static，切勿使用 npm run build
+Build command: pnpm pages:build
 Output directory: .vercel/output/static
 Environment variables: CF_PAGES=1, NODE_ENV=production, NODE_VERSION=18
 ```
@@ -498,8 +498,8 @@ Environment variables: CF_PAGES=1, NODE_ENV=production, NODE_VERSION=18
 **CLI 快速方案**:
 
 ```bash
-# 使用 Cloudflare 提供的适配器构建 + Wrangler 部署
-pnpm pages:build  # 会自动通过 pnpm dlx 下载 @cloudflare/next-on-pages
+# 使用 @cloudflare/next-on-pages 构建 + Wrangler 部署
+pnpm pages:build
 wrangler pages publish .vercel/output/static --project-name=<your-project>
 ```
 

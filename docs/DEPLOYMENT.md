@@ -163,7 +163,7 @@ CLOUDFLARE_PROJECT_NAME=nextjs-universal-template
 3. **配置构建设置**
    - **Project name**: `nextjs-universal-template`（或自定义）
    - **Production branch**: `main` 或 `master`
-   - **Build command**: `pnpm pages:build`（⚠️ 不要使用默认的 `npm run build`，否则不会生成 `.vercel/output/static`）
+   - **Build command**: `pnpm pages:build`
    - **Build output directory**: `.vercel/output/static`
    - **Root directory**: `/`（留空）
    - **Framework preset**: Next.js
@@ -173,7 +173,7 @@ CLOUDFLARE_PROJECT_NAME=nextjs-universal-template
      - `CF_PAGES=1`（用于平台检测）
      - `NODE_ENV=production`
      - `NODE_VERSION=18`（或 Cloudflare 支持的更高版本，确保兼容 `pnpm pages:build`）
-   - 使用 pnpm 时，在 "Environment variables" 中添加 `PNPM_HOME=/opt/buildhome/.pnpm` 并在 "Build settings" 启用 `Enable pnpm` 选项；命令内部会通过 `pnpm dlx @cloudflare/next-on-pages@1.13.16` 自动拉取适配器，无需把它加入项目依赖
+   - 使用 pnpm 时，在 "Environment variables" 中添加 `PNPM_HOME=/opt/buildhome/.pnpm` 并在 "Build settings" 启用 `Enable pnpm` 选项，或改用 `npm` 指定 `npx @cloudflare/next-on-pages` 命令
 
 5. **部署与自动化**
    - 点击 "Save and Deploy"，Cloudflare Pages 会先执行一次构建
@@ -196,7 +196,7 @@ CLOUDFLARE_PROJECT_NAME=nextjs-universal-template
 3. **构建 Cloudflare 产物**
 
    ```bash
-   pnpm pages:build  # 自动通过 pnpm dlx 下载 @cloudflare/next-on-pages
+   pnpm pages:build
    ```
 
 4. **部署**
@@ -209,8 +209,7 @@ CLOUDFLARE_PROJECT_NAME=nextjs-universal-template
 
 ⚠️ **关于 @cloudflare/next-on-pages**：
 
-- 仓库不再把 `@cloudflare/next-on-pages` 作为 devDependency，以避免 Vercel 等平台在安装依赖时出现 peer 版本冲突。
-- `pnpm pages:build` 会在执行时通过 `pnpm dlx @cloudflare/next-on-pages@1.13.16` 下载适配器，依旧能够稳定生成 `.vercel/output/static`，并与 `deploy.sh` 的 Cloudflare 分支保持一致。
+- `pnpm pages:build` 使用 `@cloudflare/next-on-pages`（目前已标记为弃用），但仍然可以稳定生成 `.vercel/output/static`，与 `deploy.sh` 的 Cloudflare 分支保持一致。
 - 如果你计划长期维护 Cloudflare Pages 生产环境，建议关注 [OpenNext](https://opennext.js.org/cloudflare) 或官方后续替代方案。
 
 ✅ **提示**：
