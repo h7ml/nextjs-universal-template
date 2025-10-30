@@ -95,7 +95,7 @@ export default function LoginPage() {
       // Force refresh to ensure all components update
       router.refresh();
     },
-    onError: (error) {
+    onError: (error) => {
       setError(error.message);
     },
   });
