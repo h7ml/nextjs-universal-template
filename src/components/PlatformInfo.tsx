@@ -24,8 +24,6 @@ export function PlatformInfo() {
       .then((data) => {
         const platformNames: Record<string, string> = {
           vercel: "Vercel",
-          deno: "Deno Deploy",
-          cloudflare: "Cloudflare Pages",
           local: "本地开发环境",
         };
 
@@ -51,13 +49,7 @@ export function PlatformInfo() {
           typeof window !== "undefined" &&
           (window as any).location?.hostname?.includes("vercel")
             ? "Vercel"
-            : typeof window !== "undefined" &&
-                (window as any).location?.hostname?.includes("deno.dev")
-              ? "Deno Deploy"
-              : typeof window !== "undefined" &&
-                  (window as any).location?.hostname?.includes("pages.dev")
-                ? "Cloudflare Pages"
-                : "本地开发环境";
+            : "本地开发环境";
 
         setInfo({
           platform: detectedPlatform,

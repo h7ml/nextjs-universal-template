@@ -589,7 +589,7 @@ pnpm db:seed      # 填充数据
 
 </details>
 
-## 🌍 平台支持对比
+## 🌍 部署方式对比
 
 <div align="center">
 
@@ -602,59 +602,61 @@ pnpm db:seed      # 填充数据
 <tr>
 <th align="center">特性</th>
 <th align="center">Vercel</th>
-<th align="center">Cloudflare</th>
-<th align="center">Deno Deploy</th>
+<th align="center">Docker</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td align="center"><strong>Next.js SSR</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
-<td align="center">⚠️ 静态导出</td>
-<td align="center">❌ 不支持</td>
+<td align="center">✅ <strong>完整</strong></td>
 </tr>
 <tr>
 <td align="center"><strong>API Routes</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
-<td align="center">⚠️ Edge Functions</td>
-<td align="center">⚠️ 基础支持</td>
+<td align="center">✅ <strong>完整</strong></td>
 </tr>
 <tr>
 <td align="center"><strong>Edge Runtime</strong></td>
+<td align="center">✅ <strong>支持</strong></td>
 <td align="center">✅ 支持</td>
-<td align="center">✅ <strong>原生</strong></td>
-<td align="center">✅ <strong>原生</strong></td>
 </tr>
 <tr>
 <td align="center"><strong>tRPC</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
-<td align="center">✅ 支持</td>
-<td align="center">⚠️ 需要适配</td>
+<td align="center">✅ <strong>完整</strong></td>
 </tr>
 <tr>
 <td align="center"><strong>数据库连接</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
-<td align="center">⚠️ 需要适配</td>
 </tr>
 <tr>
 <td align="center"><strong>部署难度</strong></td>
-<td align="center">⭐ <strong>简单</strong></td>
-<td align="center">⭐⭐ 中等</td>
-<td align="center">⭐⭐⭐ 复杂</td>
+<td align="center">⭐ <strong>最简单</strong></td>
+<td align="center">⭐⭐ 简单</td>
 </tr>
 <tr>
 <td align="center"><strong>免费额度</strong></td>
-<td align="center">⭐ 充足</td>
-<td align="center">⭐⭐ <strong>极多</strong></td>
-<td align="center">⭐⭐⭐ <strong>最多</strong></td>
+<td align="center">✅ 充足</td>
+<td align="center">➖ 自行管理</td>
+</tr>
+<tr>
+<td align="center"><strong>自动扩展</strong></td>
+<td align="center">✅ <strong>自动</strong></td>
+<td align="center">⚙️ 需配置</td>
+</tr>
+<tr>
+<td align="center"><strong>CDN</strong></td>
+<td align="center">✅ <strong>全球</strong></td>
+<td align="center">❌ 需额外配置</td>
 </tr>
 </tbody>
 </table>
 
 <div align="center">
 
-💡 **推荐**: 生产环境使用 **Vercel**，边缘计算使用 **Cloudflare**，API 服务使用 **Deno Deploy**
+💡 **推荐**: 生产环境使用 **Vercel**（零配置，自动扩展），自有服务器使用 **Docker**
 
 </div>
 
@@ -743,8 +745,7 @@ pnpm db:seed      # 填充数据
 **部署平台**
 
 [Vercel](https://vercel.com/docs)  
-[Cloudflare Pages](https://developers.cloudflare.com/pages/)  
-[Deno Deploy](https://deno.com/deploy/docs)
+[Docker](https://docs.docker.com)
 
 </td>
 </tr>

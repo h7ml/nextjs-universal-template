@@ -2,7 +2,7 @@
  * TypeScript type definitions for the universal template
  */
 
-export type Platform = "vercel" | "deno" | "cloudflare" | "local";
+export type Platform = "vercel" | "local";
 
 export type Runtime = "edge" | "nodejs";
 
@@ -32,10 +32,7 @@ export interface ApiResponse<T = any> {
 export interface SafeEnvVars {
   NODE_ENV: string;
   VERCEL?: boolean;
-  DENO?: boolean;
-  CF_PAGES?: boolean;
   VERCEL_ENV?: string;
-  CF_PAGES_BRANCH?: string;
 }
 
 // Declare global types for Edge Runtime
@@ -44,14 +41,7 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       VERCEL?: string;
-      DENO?: string;
-      CF_PAGES?: string;
-      CLOUDFLARE_PAGES?: string;
-      DENO_DEPLOYMENT_ID?: string;
-      // NODE_ENV is already defined in @types/node, don't redeclare
-      // NODE_ENV?: 'development' | 'production' | 'test'
       VERCEL_ENV?: "development" | "preview" | "production";
-      CF_PAGES_BRANCH?: string;
       [key: string]: string | undefined;
     }
   }
