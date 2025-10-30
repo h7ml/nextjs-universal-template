@@ -8,8 +8,6 @@ export async function GET() {
 
   const platformNames: Record<string, string> = {
     vercel: "Vercel",
-    deno: "Deno Deploy",
-    cloudflare: "Cloudflare Pages",
     local: "Local Development",
   };
 

@@ -1,7 +1,7 @@
 {
   "name": "nextjs-universal-template",
   "version": "1.0.0",
-  "description": "Universal Next.js template for Vercel, Deno Deploy, and Cloudflare Pages",
+  "description": "Universal Next.js template for Vercel and Docker deployment",
   "private": true,
   "author": {
     "name": "h7ml",

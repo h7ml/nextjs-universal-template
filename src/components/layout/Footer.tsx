@@ -22,7 +22,7 @@ export function Footer() {
               </h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              支持 Vercel、Deno Deploy 和 Cloudflare Pages 的全栈 Next.js 模板
+              支持 Vercel 和 Docker 部署的全栈 Next.js 模板
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
@@ -96,14 +96,9 @@ export function Footer() {
                   color: "from-black to-gray-800",
                 },
                 {
-                  href: "https://deno.com/deploy",
-                  label: "Deno Deploy",
+                  href: "https://www.docker.com",
+                  label: "Docker",
                   color: "from-blue-500 to-blue-600",
-                },
-                {
-                  href: "https://developers.cloudflare.com/pages",
-                  label: "Cloudflare Pages",
-                  color: "from-orange-400 to-orange-500",
                 },
               ].map((link) => (
                 <li key={link.href}>
