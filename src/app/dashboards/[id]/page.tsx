@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
+import { EChartsChart, RechartsChart } from "@/components/charts";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -9,20 +9,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import type { Widget } from "@/db/schema";
+import { trpc } from "@/lib/trpc/client";
+import type { EChartsOption } from "echarts";
 import {
   ArrowLeft,
-  Settings,
   BarChart3,
   LineChart,
   PieChart,
+  Settings,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { EChartsChart } from "@/components/charts";
-import { RechartsChart } from "@/components/charts";
-import type { EChartsOption } from "echarts";
-import type { Widget } from "@/db/schema";
+import { useParams, useRouter } from "next/navigation";
+
+// Edge Runtime 配置（Cloudflare Pages 需要）
+export const runtime = "edge";
 
 export default function DashboardDetailPage() {
   const router = useRouter();

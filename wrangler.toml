@@ -2,13 +2,13 @@ name = "nextjs-universal-template"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# 注意：本项目使用 tRPC 和数据库，需要服务器端运行时
-# 推荐使用 Vercel 部署以获得完整功能支持
-#
-# Cloudflare Pages 部署需要 OpenNext 适配器（@cloudflare/next-on-pages 已废弃）
-# 参考：https://opennext.js.org/cloudflare
-#
-# 简单方案：直接使用 Vercel（零配置，完整支持）
+# Cloudflare Pages 配置
+# 使用 @cloudflare/next-on-pages 构建时的输出目录
+pages_build_output_dir = ".vercel/output/static"
+
+# 注意：@cloudflare/next-on-pages 已废弃，但仍可使用
+# 未来建议迁移到 OpenNext: https://opennext.js.org/cloudflare
+# 或直接使用 Vercel（零配置，完整支持）
 
 # Production environment
 [env.production]
