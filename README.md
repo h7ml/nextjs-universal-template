@@ -2,7 +2,7 @@
 
 # 🚀 Next.js Universal Template
 
-**一个可以部署到 Vercel、Deno Deploy 和 Cloudflare Pages 的全栈 Next.js 模板**
+**一个支持 Vercel 和 Docker 部署的全栈 Next.js 模板**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
@@ -11,7 +11,6 @@
 [![pnpm](https://img.shields.io/badge/pnpm-9-orange?logo=pnpm)](https://pnpm.io/)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/h7ml/nextjs-universal-template)
-[![Deploy to Deno Deploy](https://deno.com/button)](https://deno.com/deploy)
 
 ---
 
@@ -45,7 +44,7 @@
 - ✅ **tRPC** 类型安全 API
 - ✅ **JWT 认证** 完整实现
 - ✅ **Drizzle ORM** + PostgreSQL
-- ✅ **多平台部署** Vercel/Deno
+- ✅ **多平台部署** Vercel/Docker
 - ✅ **响应式设计** Tailwind CSS
 - ✅ **状态码页面** 404/500 等
 
@@ -124,12 +123,7 @@
 <br>
 
 ![Vercel](https://img.shields.io/badge/Vercel-完整支持-000000?logo=vercel)
-![Cloudflare](https://img.shields.io/badge/Cloudflare-完整支持-F38020?logo=cloudflare)
-![Deno Deploy](https://img.shields.io/badge/Deno%20Deploy-基础支持-000000?logo=deno)
-
-<br>
-
-![Docker](https://img.shields.io/badge/Docker-支持-2496ED?logo=docker&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-完整支持-2496ED?logo=docker&logoColor=white)
 
 </td>
 </tr>
@@ -287,8 +281,7 @@ nextjs-universal-template/
 │   │   └── ...             # 其他组件
 │   ├── db/                 # 数据库
 │   │   ├── schema.ts       # Drizzle Schema
-│   │   ├── index.ts        # Node.js 数据库连接
-│   │   └── deno.ts         # Deno 数据库连接 🆕
+│   │   └── index.ts        # 数据库连接
 │   ├── server/             # 服务端代码
 │   │   ├── routers/        # tRPC Routers
 │   │   ├── context.ts      # tRPC Context
@@ -299,8 +292,6 @@ nextjs-universal-template/
 │   │   ├── trpc/           # tRPC Client
 │   │   └── utils.ts        # 工具函数
 │   └── types/              # TypeScript 类型
-├── deno_server.ts          # Deno Deploy 入口 🆕
-├── deno.json               # Deno 配置 🆕
 ├── drizzle.config.ts       # Drizzle 配置
 ├── docker-compose.yml      # Docker Compose
 ├── Dockerfile             # Docker 配置
@@ -424,32 +415,11 @@ nextjs-universal-template/
 
 <div align="center">
 
-### ☁️ 多平台部署支持
+### ☁️ 部署选项
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/h7ml/nextjs-universal-template)
-[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://pages.cloudflare.com/)
-[![Deploy to Deno Deploy](https://deno.com/button)](https://deno.com/deploy)
 
 </div>
-
-### 🔁 一键同时部署
-
-```bash
-# 构建并依次部署到 Vercel、Deno Deploy 与 Cloudflare Pages
-pnpm deploy:all
-```
-
-> 📌 **所需工具**：`vercel`、`deployctl`、`wrangler` CLI。脚本会自动检查并给出安装提示。
->
-> 🔐 **推荐环境变量**：
-> - `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID`
-> - `DENO_DEPLOY_TOKEN`、`DENO_PROJECT`
-> - `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_PROJECT_NAME`
->
-> 💡 **绑定 Git 后怎么办？**
-> - Vercel / Cloudflare Pages / Deno Deploy 在连接仓库后会自动执行构建。
-> - 只需按照下方的 "Build command" / "Entry point" 配置，平台会在每次推送时自动部署，无需执行 `pnpm deploy:all`。
-> - `deploy:all` 更适合本地测试或希望在 CI 中一次性调用三方 CLI 的场景。
 
 <table>
 <tr>
@@ -483,84 +453,30 @@ vercel --prod
 </td>
 <td width="50%">
 
-### 🌐 Cloudflare Pages
-
-**⚠️ 需要额外配置**: 可以支持，但需要适配器
-
-**Git 集成推荐配置**:
-
-```text
-Build command: pnpm pages:build
-Output directory: .vercel/output/static
-Environment variables: CF_PAGES=1, NODE_ENV=production, NODE_VERSION=18
-```
-
-**CLI 快速方案**:
-
-```bash
-# 使用 @cloudflare/next-on-pages 构建 + Wrangler 部署
-pnpm pages:build
-wrangler pages publish .vercel/output/static --project-name=<your-project>
-```
-
-**或者使用 Vercel**（推荐）:
-
-- 零配置，完整功能
-- 自动支持数据库和 tRPC
-
-📖 [完整说明](./docs/DEPLOYMENT.md#cloudflare-pages-部署)
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### 🦕 Deno Deploy
-
-**特点**: 原生 Edge Runtime，适合 API
-
-```bash
-# 快速部署步骤：
-# 1. 推送代码到 GitHub
-git push origin main
-
-# 2. 访问 https://dash.deno.com
-# 3. 创建项目 → 连接 GitHub
-# 4. Entry Point: deno_server.ts
-# 5. 配置环境变量
-# 6. Deploy！
-```
-
-**功能**:
-
-- ✅ 基础 API 路由
-- ✅ 静态文件服务
-- ✅ 开发模式代理 Next.js
-- ⚠️ tRPC 有限支持
-
-📖 [Deno 完整指南](./docs/DENO.md)
-
-</td>
-<td width="50%">
-
 ### 🐳 Docker
 
 **特点**: 容器化部署，可移植性强
 
 ```bash
-# 使用 Docker Compose
+# 使用 Docker Compose（推荐）
 docker-compose up -d
 
 # 或单独构建
 docker build -t nextjs-template .
-docker run -p 3000:3000 nextjs-template
+docker run -p 3000:3000 \
+  -e DATABASE_URL="postgresql://..." \
+  -e JWT_SECRET="your-secret" \
+  nextjs-template
 ```
 
 **适用场景**:
 
-- 自有服务器部署
-- 私有云环境
-- 开发环境统一
+- ✅ 自有服务器部署
+- ✅ 私有云环境
+- ✅ 开发环境统一
+- ✅ Kubernetes 部署
+
+📖 [详细文档](./docs/DEPLOYMENT.md#docker-部署)
 
 </td>
 </tr>
@@ -568,7 +484,7 @@ docker run -p 3000:3000 nextjs-template
 
 <div align="center">
 
-📚 [完整部署指南](./docs/DEPLOYMENT.md) · 📖 [Deno 完整指南](./docs/DENO.md)
+📚 [完整部署指南](./docs/DEPLOYMENT.md)
 
 </div>
 
@@ -673,7 +589,7 @@ pnpm db:seed      # 填充数据
 
 </details>
 
-## 🌍 平台支持对比
+## 🌍 部署方式对比
 
 <div align="center">
 
@@ -686,59 +602,61 @@ pnpm db:seed      # 填充数据
 <tr>
 <th align="center">特性</th>
 <th align="center">Vercel</th>
-<th align="center">Cloudflare</th>
-<th align="center">Deno Deploy</th>
+<th align="center">Docker</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td align="center"><strong>Next.js SSR</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
-<td align="center">⚠️ 静态导出</td>
-<td align="center">❌ 不支持</td>
+<td align="center">✅ <strong>完整</strong></td>
 </tr>
 <tr>
 <td align="center"><strong>API Routes</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
-<td align="center">⚠️ Edge Functions</td>
-<td align="center">⚠️ 基础支持</td>
+<td align="center">✅ <strong>完整</strong></td>
 </tr>
 <tr>
 <td align="center"><strong>Edge Runtime</strong></td>
+<td align="center">✅ <strong>支持</strong></td>
 <td align="center">✅ 支持</td>
-<td align="center">✅ <strong>原生</strong></td>
-<td align="center">✅ <strong>原生</strong></td>
 </tr>
 <tr>
 <td align="center"><strong>tRPC</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
-<td align="center">✅ 支持</td>
-<td align="center">⚠️ 需要适配</td>
+<td align="center">✅ <strong>完整</strong></td>
 </tr>
 <tr>
 <td align="center"><strong>数据库连接</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
 <td align="center">✅ <strong>完整</strong></td>
-<td align="center">⚠️ 需要适配</td>
 </tr>
 <tr>
 <td align="center"><strong>部署难度</strong></td>
-<td align="center">⭐ <strong>简单</strong></td>
-<td align="center">⭐⭐ 中等</td>
-<td align="center">⭐⭐⭐ 复杂</td>
+<td align="center">⭐ <strong>最简单</strong></td>
+<td align="center">⭐⭐ 简单</td>
 </tr>
 <tr>
 <td align="center"><strong>免费额度</strong></td>
-<td align="center">⭐ 充足</td>
-<td align="center">⭐⭐ <strong>极多</strong></td>
-<td align="center">⭐⭐⭐ <strong>最多</strong></td>
+<td align="center">✅ 充足</td>
+<td align="center">➖ 自行管理</td>
+</tr>
+<tr>
+<td align="center"><strong>自动扩展</strong></td>
+<td align="center">✅ <strong>自动</strong></td>
+<td align="center">⚙️ 需配置</td>
+</tr>
+<tr>
+<td align="center"><strong>CDN</strong></td>
+<td align="center">✅ <strong>全球</strong></td>
+<td align="center">❌ 需额外配置</td>
 </tr>
 </tbody>
 </table>
 
 <div align="center">
 
-💡 **推荐**: 生产环境使用 **Vercel**，边缘计算使用 **Cloudflare**，API 服务使用 **Deno Deploy**
+💡 **推荐**: 生产环境使用 **Vercel**（零配置，自动扩展），自有服务器使用 **Docker**
 
 </div>
 
@@ -827,8 +745,7 @@ pnpm db:seed      # 填充数据
 **部署平台**
 
 [Vercel](https://vercel.com/docs)  
-[Cloudflare Pages](https://developers.cloudflare.com/pages/)  
-[Deno Deploy](https://deno.com/deploy/docs)
+[Docker](https://docs.docker.com)
 
 </td>
 </tr>

@@ -16,10 +16,6 @@ export class EnvManager {
    * @param defaultValue - Default value if not found
    */
   static get(key: string, defaultValue?: string): string | undefined {
-    // Deno runtime support
-    if (typeof Deno !== "undefined") {
-      return Deno.env.get(key) || defaultValue;
-    }
     return getEnv(key, defaultValue);
   }
 
@@ -76,18 +72,10 @@ export class EnvManager {
    * Get deployment platform information (safe for exposure)
    */
   static getPlatformInfo() {
-    // Deno runtime detection
-    const isDeno = typeof Deno !== "undefined";
-
     return {
       VERCEL: this.getBoolean("VERCEL", false),
-      DENO: isDeno || this.getBoolean("DENO", false),
-      CF_PAGES: this.getBoolean("CF_PAGES", false),
       NODE_ENV: this.get("NODE_ENV", "development"),
-      // Platform specific
       VERCEL_ENV: this.get("VERCEL_ENV"),
-      CF_PAGES_BRANCH: this.get("CF_PAGES_BRANCH"),
-      DENO_DEPLOYMENT_ID: this.get("DENO_DEPLOYMENT_ID"),
     };
   }
 }

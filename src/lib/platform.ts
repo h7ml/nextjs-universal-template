@@ -1,6 +1,6 @@
 /**
  * Platform detection and adaptation utilities
- * Supports: Vercel, Deno Deploy, Cloudflare Pages
+ * Supports: Vercel, Docker, Local
  */
 
 import type { Platform } from "@/types";
@@ -19,29 +19,10 @@ export interface PlatformInfo {
  * Detect current deployment platform
  */
 export function detectPlatform(): Platform {
-  // Deno runtime detection (highest priority)
-  if (typeof Deno !== "undefined") {
-    return "deno";
-  }
-
   if (typeof process !== "undefined") {
     if (process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL) {
       return "vercel";
     }
-    if (process.env.DENO || process.env.DENO_DEPLOYMENT_ID) {
-      return "deno";
-    }
-    if (process.env.CF_PAGES || process.env.CLOUDFLARE_PAGES) {
-      return "cloudflare";
-    }
-  }
-
-  // Cloudflare specific detection
-  if (
-    typeof navigator !== "undefined" &&
-    (navigator as any).userAgent?.includes("Cloudflare")
-  ) {
-    return "cloudflare";
   }
 
   return "local";
@@ -61,7 +42,7 @@ export function getPlatformInfo(): PlatformInfo {
   const isDevelopment = nodeEnv === "development";
   const isPreview =
     typeof process !== "undefined"
-      ? !!(process.env.VERCEL_ENV === "preview" || process.env.CF_PAGES_BRANCH)
+      ? !!(process.env.VERCEL_ENV === "preview")
       : false;
 
   // Detect runtime - Edge Runtime doesn't have full Node.js APIs

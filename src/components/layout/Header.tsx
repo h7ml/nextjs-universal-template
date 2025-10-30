@@ -15,11 +15,13 @@ import {
   Database,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Get current user
@@ -38,8 +40,11 @@ export function Header() {
     }
     // Close user menu
     setShowUserMenu(false);
+    // Clear all React Query caches to ensure fresh data on next login
+    queryClient.clear();
     // Redirect to login page
     router.push("/login");
+    // Force refresh to update the page state
     router.refresh();
   };
 
