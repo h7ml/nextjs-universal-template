@@ -58,6 +58,7 @@
     "deploy:vercel": "./scripts/deploy.sh vercel",
     "deploy:cloudflare": "./scripts/deploy.sh cloudflare",
     "deploy:deno": "./scripts/deploy.sh deno",
+    "deploy:all": "./scripts/deploy.sh all",
     "build:cf": "pnpm build && rm -rf .next/cache",
     "pages:build": "rm -rf .vercel && npx @cloudflare/next-on-pages",
     "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat",

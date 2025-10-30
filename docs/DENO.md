@@ -84,6 +84,8 @@ deno install -A jsr:@deno/deploy-cli
 deployctl deploy --project=your-project-name deno_server.ts
 ```
 
+> 💡 也可以运行 `pnpm deploy:all`，脚本会自动调用 `deployctl` 并串联其它平台的部署流程。
+
 ---
 
 ## 🛠️ 开发模式
