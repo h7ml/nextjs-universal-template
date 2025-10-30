@@ -1,0 +1,32 @@
+# Cloudflare Pages 忽略文件
+# 只上传必要的构建产物，排除缓存和源文件
+
+# 缓存文件
+.next/cache
+
+# 源文件
+src/
+public/
+node_modules/
+
+# 配置文件
+*.config.js
+*.config.ts
+tsconfig.json
+drizzle.config.ts
+
+# 文档
+docs/
+README.md
+*.md
+
+# 开发文件
+.env*
+.vscode/
+.git/
+
+# 其他
+scripts/
+deno_server.ts
+deno.json
+

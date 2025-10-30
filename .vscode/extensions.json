@@ -1,0 +1,28 @@
+{
+  "recommendations": [
+    // Next.js 和 React
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+
+    // TypeScript
+    "ms-vscode.vscode-typescript-next",
+
+    // Deno
+    "denoland.vscode-deno",
+
+    // Git
+    "eamodio.gitlens",
+
+    // 其他实用工具
+    "usernamehw.errorlens",
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag",
+    "ms-vscode.vscode-json",
+
+    // 数据库
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg"
+  ],
+  "unwantedRecommendations": ["ms-vscode.vscode-typescript"]
+}

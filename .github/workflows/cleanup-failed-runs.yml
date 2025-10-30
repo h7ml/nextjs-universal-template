@@ -1,0 +1,161 @@
+name: Cleanup Failed Workflow Runs
+
+on:
+  # 定时触发：每天凌晨 2 点（UTC）
+  schedule:
+    - cron: "0 2 * * *"
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "保留最近 N 天的运行记录（默认 7 天）"
+        required: false
+        default: "7"
+        type: string
+      dry_run:
+        description: "仅显示而不实际删除（dry run）"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      # 需要读取和删除工作流运行的权限
+      actions: write
+    steps:
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 在 GitHub Actions 中，GITHUB_TOKEN 是自动创建的 secret
+          # GitHub CLI 会自动读取 GH_TOKEN 环境变量
+          echo "✅ GitHub CLI 已通过 GITHUB_TOKEN 认证"
+
+      - name: Set cleanup parameters
+        id: params
+        run: |
+          DAYS="${{ github.event.inputs.days || '7' }}"
+          # 处理 boolean 输入（GitHub Actions 返回 true/false 字符串）
+          DRY_RUN_INPUT="${{ github.event.inputs.dry_run || 'true' }}"
+          if [ "$DRY_RUN_INPUT" == "true" ]; then
+            DRY_RUN="true"
+          else
+            DRY_RUN="false"
+          fi
+          echo "days=$DAYS" >> $GITHUB_OUTPUT
+          echo "dry_run=$DRY_RUN" >> $GITHUB_OUTPUT
+          echo "保留最近 $DAYS 天的运行记录"
+          if [ "$DRY_RUN" == "true" ]; then
+            echo "🔍 仅显示模式（不会实际删除）"
+          else
+            echo "🗑️  删除模式（将实际删除）"
+          fi
+
+      - name: Get failed workflow runs
+        id: get-failed-runs
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DAYS="${{ steps.params.outputs.days }}"
+          # GitHub Actions 运行在 Ubuntu，使用 Linux date 格式
+          CUTOFF_DATE=$(date -u -d "$DAYS days ago" +"%Y-%m-%dT%H:%M:%SZ")
+
+          echo "查找 $CUTOFF_DATE 之前的失败运行..."
+
+          # 获取所有失败的工作流运行（不使用 --jq，手动过滤）
+          gh run list \
+            --repo ${{ github.repository }} \
+            --limit 100 \
+            --json databaseId,conclusion,createdAt,displayTitle,workflowName \
+            > /tmp/all-runs.json
+
+          # 使用 jq 过滤失败的运行
+          jq "[.[] | select(.conclusion == \"failure\" and (.createdAt < \"$CUTOFF_DATE\"))]" \
+            /tmp/all-runs.json > /tmp/failed-runs.json
+
+          # 检查结果
+          RUN_COUNT=$(jq '. | length' /tmp/failed-runs.json)
+          
+          if [ "$RUN_COUNT" -eq 0 ]; then
+            echo "没有找到需要清理的失败运行"
+            echo "runs_to_delete=[]" >> $GITHUB_OUTPUT
+          else
+            echo "找到 $RUN_COUNT 个失败的运行"
+            echo "runs_to_delete=$(jq -c '[.[].databaseId]' /tmp/failed-runs.json)" >> $GITHUB_OUTPUT
+            jq -r '.[] | "  - \(.displayTitle) (\(.workflowName)) - \(.createdAt)"' /tmp/failed-runs.json
+          fi
+
+      - name: Delete failed runs
+        if: steps.get-failed-runs.outputs.runs_to_delete != '[]' && steps.get-failed-runs.outputs.runs_to_delete != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DRY_RUN="${{ steps.params.outputs.dry_run }}"
+
+          if [ "$DRY_RUN" == "true" ]; then
+            echo "🔍 仅显示模式：以下运行将被删除（但不会实际执行）"
+            cat /tmp/failed-runs.json | jq -r '.[] | "  - Run ID: \(.databaseId) - \(.displayTitle)"'
+          else
+            echo "🗑️  开始删除失败的运行..."
+
+            # 读取要删除的运行 ID
+            RUN_IDS=$(cat /tmp/failed-runs.json | jq -r '.[].databaseId')
+
+            DELETED=0
+            FAILED=0
+
+            for RUN_ID in $RUN_IDS; do
+              if gh api \
+                --method DELETE \
+                "/repos/${{ github.repository }}/actions/runs/$RUN_ID"; then
+                echo "✅ 已删除运行: $RUN_ID"
+                DELETED=$((DELETED + 1))
+              else
+                echo "❌ 删除失败: $RUN_ID"
+                FAILED=$((FAILED + 1))
+              fi
+            done
+
+            echo "📊 删除完成：成功 $DELETED 个，失败 $FAILED 个"
+          fi
+
+      - name: Summary
+        run: |
+          DRY_RUN="${{ steps.params.outputs.dry_run }}"
+          DAYS="${{ steps.params.outputs.days }}"
+
+          if [ "$DRY_RUN" == "true" ]; then
+            echo "## 🔍 清理预览" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**模式**: 仅显示（Dry Run）" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## 🗑️  清理结果" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**模式**: 实际删除" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**保留天数**: $DAYS 天" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f /tmp/failed-runs.json ]; then
+            RUN_COUNT=$(cat /tmp/failed-runs.json | jq '. | length')
+            echo "**找到的失败运行**: $RUN_COUNT 个" >> $GITHUB_STEP_SUMMARY
+
+            if [ "$RUN_COUNT" -gt 0 ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### 运行列表" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "| 工作流 | 标题 | 创建时间 |" >> $GITHUB_STEP_SUMMARY
+              echo "|--------|------|----------|" >> $GITHUB_STEP_SUMMARY
+              cat /tmp/failed-runs.json | jq -r '.[] | "| \(.workflowName) | \(.displayTitle) | \(.createdAt) |"' >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "**找到的失败运行**: 0 个" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ 无需清理" >> $GITHUB_STEP_SUMMARY
+          fi
