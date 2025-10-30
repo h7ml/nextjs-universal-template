@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { StatusActions } from "./StatusActions";
 
-// Edge Runtime 配置（Cloudflare Pages 需要）
+// Edge Runtime 配置（支持多平台部署）
 export const runtime = "edge";
 
 type StatusCode = 400 | 401 | 403 | 404 | 500 | 502 | 503;

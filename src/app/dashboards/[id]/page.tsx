@@ -23,7 +23,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
-// Edge Runtime 配置（Cloudflare Pages 需要）
+// Edge Runtime 配置（支持多平台部署）
 export const runtime = "edge";
 
 export default function DashboardDetailPage() {
