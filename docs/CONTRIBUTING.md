@@ -135,9 +135,8 @@ pnpm format
 
 本模板支持以下平台的部署：
 
-- **Vercel**: 推荐，完整 Next.js 支持
-- **Deno Deploy**: API 路由和边缘计算
-- **Cloudflare Pages**: 静态导出
+- **Vercel**: 推荐，完整 Next.js 支持，零配置部署
+- **Docker**: 容器化部署，适合自有服务器和私有云环境
 
 请确保在不同平台的兼容性，详见 `docs/` 目录中的部署文档。
 

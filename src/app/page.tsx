@@ -51,7 +51,7 @@ export default function Home() {
           </span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          支持 Vercel、Deno Deploy 和 Cloudflare Pages 的全栈 Next.js 模板
+          支持 Vercel 和 Docker 部署的全栈 Next.js 模板
           <br />
           <span className="text-sm">开箱即用的现代化开发体验</span>
         </p>
@@ -97,7 +97,7 @@ export default function Home() {
           {
             icon: Globe,
             title: "多平台部署",
-            desc: "Vercel / Deno / Cloudflare",
+            desc: "Vercel / Docker",
           },
           { icon: Rocket, title: "tRPC", desc: "端到端类型安全 API" },
           { icon: Shield, title: "Drizzle ORM", desc: "现代化数据库操作" },
@@ -136,7 +136,7 @@ export default function Home() {
               "Next.js 14 App Router 架构",
               "TypeScript 完整支持",
               "Edge Runtime 兼容",
-              "多平台部署配置（Vercel / Deno / Cloudflare）",
+              "多平台部署配置（Vercel / Docker）",
               "tRPC 端到端类型安全",
               "Drizzle ORM 数据库操作",
               "JWT 用户认证系统",

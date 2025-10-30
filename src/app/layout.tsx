@@ -6,7 +6,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 export const metadata: Metadata = {
   title: "Next.js Universal Template",
   description:
-    "A universal Next.js template for Vercel, Deno Deploy, and Cloudflare Pages",
+    "A universal Next.js template for Vercel and Docker deployment",
 };
 
 export default function RootLayout({

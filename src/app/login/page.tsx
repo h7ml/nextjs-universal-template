@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, User } from "lucide-react";
 
 // Default test accounts from seed data
@@ -38,6 +39,7 @@ const DEFAULT_USERS = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -86,9 +88,14 @@ export default function LoginPage() {
       if (typeof window !== "undefined") {
         localStorage.setItem("auth_token", data.token);
       }
+      // Invalidate auth queries to refresh user state
+      queryClient.invalidateQueries();
+      // Navigate to dashboard
       router.push("/dashboard");
+      // Force refresh to ensure all components update
+      router.refresh();
     },
-    onError: (error) => {
+    onError: (error) {
       setError(error.message);
     },
   });
@@ -99,7 +106,12 @@ export default function LoginPage() {
       if (typeof window !== "undefined") {
         localStorage.setItem("auth_token", data.token);
       }
+      // Invalidate auth queries to refresh user state
+      queryClient.invalidateQueries();
+      // Navigate to dashboard
       router.push("/dashboard");
+      // Force refresh to ensure all components update
+      router.refresh();
     },
     onError: (error) => {
       setError(error.message);
