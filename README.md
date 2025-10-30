@@ -432,6 +432,25 @@ nextjs-universal-template/
 
 </div>
 
+### 🔁 一键同时部署
+
+```bash
+# 构建并依次部署到 Vercel、Deno Deploy 与 Cloudflare Pages
+pnpm deploy:all
+```
+
+> 📌 **所需工具**：`vercel`、`deployctl`、`wrangler` CLI。脚本会自动检查并给出安装提示。
+>
+> 🔐 **推荐环境变量**：
+> - `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID`
+> - `DENO_DEPLOY_TOKEN`、`DENO_PROJECT`
+> - `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_PROJECT_NAME`
+>
+> 💡 **绑定 Git 后怎么办？**
+> - Vercel / Cloudflare Pages / Deno Deploy 在连接仓库后会自动执行构建。
+> - 只需按照下方的 "Build command" / "Entry point" 配置，平台会在每次推送时自动部署，无需执行 `pnpm deploy:all`。
+> - `deploy:all` 更适合本地测试或希望在 CI 中一次性调用三方 CLI 的场景。
+
 <table>
 <tr>
 <td width="50%">
@@ -468,12 +487,20 @@ vercel --prod
 
 **⚠️ 需要额外配置**: 可以支持，但需要适配器
 
-**快速方案**:
+**Git 集成推荐配置**:
+
+```text
+Build command: pnpm pages:build
+Output directory: .vercel/output/static
+Environment variables: CF_PAGES=1, NODE_ENV=production, NODE_VERSION=18
+```
+
+**CLI 快速方案**:
 
 ```bash
-# 使用 @cloudflare/next-on-pages
-pnpm add -D @cloudflare/next-on-pages
-npx @cloudflare/next-on-pages
+# 使用 @cloudflare/next-on-pages 构建 + Wrangler 部署
+pnpm pages:build
+wrangler pages publish .vercel/output/static --project-name=<your-project>
 ```
 
 **或者使用 Vercel**（推荐）:
