@@ -58,7 +58,10 @@
     "deploy:vercel": "./scripts/deploy.sh vercel",
     "deploy:cloudflare": "./scripts/deploy.sh cloudflare",
     "deploy:deno": "./scripts/deploy.sh deno",
-    "build:cf": "pnpm build && rm -rf .next/cache"
+    "build:cf": "pnpm build && rm -rf .next/cache",
+    "cf:build": "pnpm build:cf",
+    "cf:deploy": "wrangler pages deploy .next --project-name=nextjs-universal-template",
+    "cf:preview": "wrangler pages dev .next"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
