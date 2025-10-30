@@ -601,7 +601,7 @@ pnpm db:seed      # 填充数据
 所有表使用 `universal_` 前缀：
 
 - `universal_users` - 用户表
-- `universal_roles` - 角色表  
+- `universal_roles` - 角色表
 - `universal_sessions` - 会话表
 - `universal_dashboards` - 看板表
 - `universal_widgets` - 组件表
@@ -613,16 +613,19 @@ pnpm db:seed      # 填充数据
 <summary><b>📡 tRPC API 端点</b></summary>
 
 **认证**
+
 - `auth.register` - 注册用户
 - `auth.login` - 登录
 - `auth.me` - 获取当前用户
 
 **用户管理**
+
 - `user.list` - 获取用户列表
 - `user.getById` - 获取用户详情
 - `user.updateProfile` - 更新用户资料
 
 **看板管理**
+
 - `dashboard.list` - 获取看板列表
 - `dashboard.getById` - 获取看板详情
 - `dashboard.create` - 创建看板
@@ -763,7 +766,6 @@ pnpm db:seed      # 填充数据
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
-
 
 ## 🔗 相关链接
 

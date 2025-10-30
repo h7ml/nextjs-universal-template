@@ -155,27 +155,26 @@
 
 ✅ **可行的解决方案**：
 
-**方案 1: 使用 @cloudflare/next-on-pages（推荐）**
-```bash
-# 安装适配器
-pnpm add -D @cloudflare/next-on-pages
+**方案 1: 使用 OpenNext（推荐）**
 
-# 修改构建命令
-npx @cloudflare/next-on-pages
+注意：`@cloudflare/next-on-pages` 已废弃，官方推荐使用 [OpenNext](https://opennext.js.org/cloudflare)。
 
-# 这个适配器会处理 Next.js 到 Cloudflare Pages 的转换
-```
-参考：https://developers.cloudflare.com/pages/framework-guides/nextjs/
+由于 OpenNext 配置较复杂且本项目特性（数据库、tRPC、动态路由），**强烈建议直接使用 Vercel**，这是最适合 Next.js 的部署平台。
+
+如需了解 OpenNext：https://opennext.js.org/cloudflare
 
 **方案 2: 使用 Vercel（强烈推荐）**
+
 - 零配置，完整支持所有功能
 - 自动处理数据库连接和 Edge Functions
 
 **方案 3: 混合部署**
+
 - 静态资源 → Cloudflare Pages
 - API 服务 → Vercel/Deno Deploy
 
 **方案 4: 清理构建产物**
+
 - 在 Cloudflare Pages 设置中排除缓存目录
 - 仅上传必要的构建文件
 
