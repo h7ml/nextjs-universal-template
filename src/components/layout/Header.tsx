@@ -12,6 +12,7 @@ import {
   LogIn,
   LogOut,
   User as UserIcon,
+  Database,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
@@ -55,6 +56,13 @@ export function Header() {
       href: "/dashboards",
       label: "管理",
       icon: Settings,
+      requireAuth: true,
+      requireAdmin: true,
+    },
+    {
+      href: "/data-sources",
+      label: "数据源",
+      icon: Database,
       requireAuth: true,
       requireAdmin: true,
     },
