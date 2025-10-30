@@ -10,7 +10,7 @@
 
 ```bash
 # 1. 构建
-pnpm pages:build
+pnpm pages:build  # 自动通过 pnpm dlx 下载 @cloudflare/next-on-pages
 
 # 2. 部署
 pnpm pages:deploy
@@ -49,7 +49,7 @@ pnpm cf:preview
 
 | 配置项 | 方案 1（推荐） | 方案 2 |
 |--------|--------------|--------|
-| **Build command** | `pnpm pages:build` | `pnpm build:cf` |
+| **Build command** | `pnpm pages:build`（⚠️ 不要改成 `npm run build`） | `pnpm build:cf` |
 | **Build output directory** | `.vercel/output/static` | `.next` |
 | **Environment variables** | `DATABASE_URL`, `JWT_SECRET`, `CF_PAGES`, `NODE_ENV`, `NODE_VERSION` | 同左 |
 
