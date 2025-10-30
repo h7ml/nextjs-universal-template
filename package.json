@@ -58,8 +58,9 @@
     "deploy:vercel": "./scripts/deploy.sh vercel",
     "deploy:cloudflare": "./scripts/deploy.sh cloudflare",
     "deploy:deno": "./scripts/deploy.sh deno",
+    "deploy:all": "./scripts/deploy.sh all",
     "build:cf": "pnpm build && rm -rf .next/cache",
-    "pages:build": "rm -rf .vercel && npx @cloudflare/next-on-pages",
+    "pages:build": "rm -rf .vercel && pnpm dlx @cloudflare/next-on-pages@1.13.16",
     "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat",
     "pages:deploy": "pnpm pages:build && wrangler pages deploy .vercel/output/static --project-name=nextjs-universal-template",
     "cf:build": "pnpm build:cf",
@@ -107,7 +108,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.16",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.4",
     "eslint": "^8.57.0",

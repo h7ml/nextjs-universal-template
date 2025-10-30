@@ -10,7 +10,7 @@
 
 ```bash
 # 1. 构建
-pnpm pages:build
+pnpm pages:build  # 自动通过 pnpm dlx 下载 @cloudflare/next-on-pages
 
 # 2. 部署
 pnpm pages:deploy
@@ -45,13 +45,13 @@ pnpm cf:preview
 
 ## 推荐使用方式
 
-### 在 Cloudflare Pages Dashboard
+### 在 Cloudflare Pages Dashboard（绑定 Git 仓库）
 
 | 配置项 | 方案 1（推荐） | 方案 2 |
 |--------|--------------|--------|
-| **Build command** | `pnpm pages:build` | `pnpm build:cf` |
+| **Build command** | `pnpm pages:build`（⚠️ 不要改成 `npm run build`） | `pnpm build:cf` |
 | **Build output directory** | `.vercel/output/static` | `.next` |
-| **Environment variables** | DATABASE_URL, JWT_SECRET | DATABASE_URL, JWT_SECRET |
+| **Environment variables** | `DATABASE_URL`, `JWT_SECRET`, `CF_PAGES`, `NODE_ENV`, `NODE_VERSION` | 同左 |
 
 ### 环境变量配置
 
@@ -59,21 +59,28 @@ pnpm cf:preview
 DATABASE_URL=postgresql://user:password@host:5432/database
 JWT_SECRET=your-jwt-secret-min-32-chars
 NODE_ENV=production
+CF_PAGES=1
+NODE_VERSION=18
 ```
 
 ## 注意事项
 
-1. **@cloudflare/next-on-pages 已废弃**
-   - 虽然仍可使用，但未来可能停止维护
-   - 新项目建议使用 Vercel 或 OpenNext
+1. **Git 集成会复用与 `deploy.sh` 相同的构建流程**
+   - `pnpm pages:build` 在 Cloudflare 构建环境中运行 `pnpm dlx @cloudflare/next-on-pages@1.13.16`
+   - 输出 `.vercel/output/static`，可直接被 Wrangler 和 Dashboard 部署
 
-2. **动态路由已配置 Edge Runtime**
+2. **@cloudflare/next-on-pages 已废弃且未作为仓库依赖**
+   - 适配器仍可用，但未来可能停止维护
+   - 为避免 Vercel 等平台安装依赖时出现 peer 版本冲突，仓库通过 `pnpm dlx` 按需下载该包
+   - 新项目建议关注 OpenNext 或直接选择 Vercel
+
+3. **动态路由已配置 Edge Runtime**
    - 所有动态路由（[status]、users/[id]、dashboards/[id]）已添加 `export const runtime = 'edge'`
    - 满足 Cloudflare Pages 要求
 
-3. **数据库连接**
+4. **数据库连接**
    - 确保数据库支持 HTTP 连接（如 Neon Serverless）
-   - 在 Cloudflare Pages 环境变量中配置 DATABASE_URL
+   - 在 Cloudflare Pages 环境变量中配置 `DATABASE_URL`
 
 ## 最佳实践
 

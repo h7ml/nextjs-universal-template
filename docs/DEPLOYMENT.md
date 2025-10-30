@@ -4,11 +4,70 @@
 
 ## 📋 目录
 
+- [多平台同时部署](#多平台同时部署)
 - [Vercel 部署](#vercel-部署)
 - [Cloudflare Pages 部署](#cloudflare-pages-部署)
 - [Deno Deploy 部署](#deno-deploy-部署)
 - [环境变量配置](#环境变量配置)
 - [故障排除](#故障排除)
+
+---
+
+## 多平台同时部署
+
+借助仓库内置的 `scripts/deploy.sh` 脚本，可以一次性构建并部署到 Vercel、Deno Deploy 和 Cloudflare Pages。
+
+> 💡 **已经把仓库连接到平台了吗？**
+>
+> 当你在 Vercel、Cloudflare Pages 或 Deno Deploy 中绑定 Git 仓库后，每次推送都会由平台自动构建并部署。此时无需运行 `deploy.sh`，只需在对应平台的 "Build command" / "Entry point" 中使用下文的推荐配置即可。`deploy.sh` 更适合需要在本地或 CI 中串联三方 CLI 的场景。
+
+### 一键部署命令
+
+```bash
+# 构建并依次部署到三个平台
+pnpm deploy:all
+```
+
+脚本会自动：
+
+- 检测并复用已有的 `.next` 构建结果（如不存在则执行 `pnpm build`）
+- 使用 `deployctl` 推送到 Deno Deploy，并尝试预热 Deno 缓存
+- 仅在缺少 `.vercel/output/static` 时运行 `pnpm pages:build`，避免重复构建
+- 调用 Vercel CLI 完成生产部署，在检测到凭据时启用非交互模式
+
+### 必需的 CLI 工具
+
+| 平台 | CLI | 安装命令 |
+| ---- | --- | -------- |
+| Vercel | `vercel` | `npm i -g vercel` |
+| Deno Deploy | `deployctl` | `deno install -A jsr:@deno/deploy-cli` |
+| Cloudflare Pages | `wrangler` | `npm i -g wrangler` |
+
+脚本会检测这些工具是否安装；缺失时会给出安装提示。
+
+> ℹ️ **Vercel CLI 提示**：当设置 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 时，脚本会在后台导出这些变量并以非交互方式执行 `vercel deploy --prod`。无需额外的 `--scope` 或 `--project` 参数，可避免新版 CLI 报错。
+
+### 环境变量（推荐）
+
+在 CI/CD 环境中，提前配置以下变量即可实现全自动部署：
+
+```env
+# Vercel
+VERCEL_TOKEN=xxxx
+VERCEL_ORG_ID=team_xxxx
+VERCEL_PROJECT_ID=prj_xxxx
+
+# Deno Deploy
+DENO_DEPLOY_TOKEN=xxxx
+DENO_PROJECT=your-deno-project
+
+# Cloudflare Pages
+CLOUDFLARE_API_TOKEN=xxxx
+CLOUDFLARE_ACCOUNT_ID=xxxx
+CLOUDFLARE_PROJECT_NAME=nextjs-universal-template
+```
+
+> 💡 **提示**：变量缺失时，CLI 会切换到交互模式，你可以在本地手动确认部署流程。
 
 ---
 
@@ -21,7 +80,7 @@
 
 ### 步骤
 
-#### 1. 通过 GitHub 部署（推荐）
+#### 1. 通过 GitHub 集成部署（推荐）
 
 1. **推送代码到 GitHub**
 
@@ -49,9 +108,9 @@
    - 在项目设置中添加环境变量
    - `VERCEL=1` 会自动设置，无需手动添加
 
-5. **部署**
-   - 点击 "Deploy"
-   - 等待构建完成
+5. **部署与自动化**
+   - 首次点击 "Deploy" 后，Vercel 会自动构建 `main`（或你设置的分支）
+   - 之后每次推送都会触发新构建，无需手动运行脚本
 
 #### 2. 通过 CLI 部署
 
@@ -91,7 +150,7 @@
 
 ### 步骤
 
-#### 1. 通过 GitHub 部署（推荐）
+#### 1. 通过 GitHub 集成部署（推荐）
 
 1. **推送代码到 GitHub**（同上）
 
@@ -104,8 +163,8 @@
 3. **配置构建设置**
    - **Project name**: `nextjs-universal-template`（或自定义）
    - **Production branch**: `main` 或 `master`
-   - **Build command**: `pnpm build:cf` ⚠️ 重要：使用 build:cf 而不是 build
-   - **Build output directory**: `.next`
+   - **Build command**: `pnpm pages:build`（⚠️ 不要使用默认的 `npm run build`，否则不会生成 `.vercel/output/static`）
+   - **Build output directory**: `.vercel/output/static`
    - **Root directory**: `/`（留空）
    - **Framework preset**: Next.js
 
@@ -113,10 +172,12 @@
    - 在项目设置 → Environment variables 中添加：
      - `CF_PAGES=1`（用于平台检测）
      - `NODE_ENV=production`
+     - `NODE_VERSION=18`（或 Cloudflare 支持的更高版本，确保兼容 `pnpm pages:build`）
+   - 使用 pnpm 时，在 "Environment variables" 中添加 `PNPM_HOME=/opt/buildhome/.pnpm` 并在 "Build settings" 启用 `Enable pnpm` 选项；命令内部会通过 `pnpm dlx @cloudflare/next-on-pages@1.13.16` 自动拉取适配器，无需把它加入项目依赖
 
-5. **部署**
-   - 点击 "Save and Deploy"
-   - 等待构建完成
+5. **部署与自动化**
+   - 点击 "Save and Deploy"，Cloudflare Pages 会先执行一次构建
+   - 之后每次推送都会自动重新执行 `pnpm pages:build` 并部署 `.vercel/output/static`
 
 #### 2. 通过 Wrangler CLI 部署
 
@@ -132,51 +193,30 @@
    wrangler login
    ```
 
-3. **构建**
+3. **构建 Cloudflare 产物**
 
    ```bash
-   npm run build
+   pnpm pages:build  # 自动通过 pnpm dlx 下载 @cloudflare/next-on-pages
    ```
 
 4. **部署**
+
    ```bash
-   wrangler pages publish .next --project-name=nextjs-universal-template
+   wrangler pages publish .vercel/output/static --project-name=nextjs-universal-template
    ```
 
 #### 注意事项
 
-⚠️ **当前限制**：
+⚠️ **关于 @cloudflare/next-on-pages**：
 
-本项目**当前配置不推荐直接部署到 Cloudflare Pages**，原因：
+- 仓库不再把 `@cloudflare/next-on-pages` 作为 devDependency，以避免 Vercel 等平台在安装依赖时出现 peer 版本冲突。
+- `pnpm pages:build` 会在执行时通过 `pnpm dlx @cloudflare/next-on-pages@1.13.16` 下载适配器，依旧能够稳定生成 `.vercel/output/static`，并与 `deploy.sh` 的 Cloudflare 分支保持一致。
+- 如果你计划长期维护 Cloudflare Pages 生产环境，建议关注 [OpenNext](https://opennext.js.org/cloudflare) 或官方后续替代方案。
 
-- 默认构建会包含缓存文件（超过 25 MiB 限制）
-- 页面依赖 tRPC 和数据库，构建时会尝试连接数据库
-- 动态路由需要额外配置
+✅ **提示**：
 
-✅ **可行的解决方案**：
-
-**方案 1: 使用 OpenNext（推荐）**
-
-注意：`@cloudflare/next-on-pages` 已废弃，官方推荐使用 [OpenNext](https://opennext.js.org/cloudflare)。
-
-由于 OpenNext 配置较复杂且本项目特性（数据库、tRPC、动态路由），**强烈建议直接使用 Vercel**，这是最适合 Next.js 的部署平台。
-
-如需了解 OpenNext：https://opennext.js.org/cloudflare
-
-**方案 2: 使用 Vercel（强烈推荐）**
-
-- 零配置，完整支持所有功能
-- 自动处理数据库连接和 Edge Functions
-
-**方案 3: 混合部署**
-
-- 静态资源 → Cloudflare Pages
-- API 服务 → Vercel/Deno Deploy
-
-**方案 4: 清理构建产物**
-
-- 在 Cloudflare Pages 设置中排除缓存目录
-- 仅上传必要的构建文件
+- `pnpm pages:build` 会自动跳过 `.next/cache`，避免超出 25 MiB 限制。
+- 若希望继续沿用旧的 `pnpm build:cf` + `.next` 流程，可在 Dashboard 中改回这些命令，但功能会受到限制（例如动态路由和 tRPC）。
 
 ---
 
