@@ -59,7 +59,7 @@
     "deploy:cloudflare": "./scripts/deploy.sh cloudflare",
     "deploy:deno": "./scripts/deploy.sh deno",
     "build:cf": "pnpm build && rm -rf .next/cache",
-    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:build": "rm -rf .vercel && npx @cloudflare/next-on-pages",
     "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat",
     "pages:deploy": "pnpm pages:build && wrangler pages deploy .vercel/output/static --project-name=nextjs-universal-template",
     "cf:build": "pnpm build:cf",
