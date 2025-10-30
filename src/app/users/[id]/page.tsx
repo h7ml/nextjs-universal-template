@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -10,22 +8,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { trpc } from "@/lib/trpc/client";
 import {
   ArrowLeft,
-  Mail,
-  User as UserIcon,
-  Shield,
   Calendar,
   CheckCircle,
-  XCircle,
   Edit,
-  X,
   Lock,
+  Mail,
+  Shield,
+  User as UserIcon,
+  X,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import type { User } from "@/db/schema";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+// Edge Runtime 配置（Cloudflare Pages 需要）
+export const runtime = "edge";
 
 export default function UserDetailPage() {
   const router = useRouter();
