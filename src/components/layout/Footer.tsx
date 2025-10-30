@@ -45,6 +45,7 @@ export function Footer() {
                 { href: "/", label: "首页" },
                 { href: "/dashboard", label: "数据看板" },
                 { href: "/dashboards", label: "看板管理" },
+                { href: "/data-sources", label: "数据源管理" },
                 { href: "/users", label: "用户管理" },
               ].map((link) => (
                 <li key={link.href}>
