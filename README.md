@@ -35,6 +35,8 @@
 - ✅ **Edge Runtime** 多平台兼容
 - ✅ **热重载** 开发体验
 - ✅ **代码规范** ESLint + Prettier
+- ✅ **Vitest** 单元测试
+- ✅ **Playwright** E2E测试
 
 </td>
 <td width="50%">
@@ -46,19 +48,53 @@
 - ✅ **Drizzle ORM** + PostgreSQL
 - ✅ **多平台部署** Vercel/Docker
 - ✅ **响应式设计** Tailwind CSS
-- ✅ **状态码页面** 404/500 等
+- ✅ **Sentry** 错误追踪
+- ✅ **Pino** 结构化日志
+- ✅ **Redis** 缓存支持
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-**📊 数据可视化**
+**📊 数据分析平台**
 
-- ✅ **ECharts** 丰富图表
-- ✅ **Recharts** 灵活组件
-- ✅ **数据看板** 完整功能
-- ✅ **多种图表类型** 支持
+- ✅ **拖拽布局** React Grid Layout
+- ✅ **30+图表** ECharts + Recharts
+- ✅ **Dashboard模板** 预设方案
+- ✅ **实时刷新** Server-Sent Events
+- ✅ **分享嵌入** 公开访问
+- ✅ **SQL编辑器** Monaco Editor
+- ✅ **查询缓存** Redis优化
+- ✅ **结果导出** CSV/Excel/JSON
+
+</td>
+<td width="50%">
+
+**🗄️ 多数据源**
+
+- ✅ **PostgreSQL** 完整支持
+- ✅ **MySQL** 适配器
+- ✅ **MongoDB** 适配器
+- ✅ **Schema发现** 自动解析
+- ✅ **连接池** 管理优化
+- ✅ **数据预览** 快速浏览
+- ✅ **查询历史** 收藏功能
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**🔐 安全加固**
+
+- ✅ **速率限制** Upstash Redis
+- ✅ **XSS防护** DOMPurify
+- ✅ **SQL注入** ORM防护
+- ✅ **CSRF保护** Token验证
+- ✅ **敏感数据** 自动脱敏
+- ✅ **RBAC权限** 细粒度控制
+- ✅ **审计日志** 操作追踪
 
 </td>
 <td width="50%">
@@ -69,6 +105,8 @@
 - ✅ **深色模式** 自动切换
 - ✅ **主题系统** 可定制
 - ✅ **完整 CRUD** 示例代码
+- ✅ **响应式布局** 移动优先
+- ✅ **Framer Motion** 动画
 
 </td>
 </tr>
@@ -145,6 +183,28 @@
 
 - `echarts@^5.5.0` - ECharts 图表库
 - `recharts@^2.15.2` - Recharts 图表库
+- `react-grid-layout` - 拖拽布局
+- `@monaco-editor/react` - SQL编辑器
+
+**测试框架**
+
+- `vitest@^4.0.5` - 单元测试
+- `@playwright/test` - E2E测试
+- `@testing-library/react` - React测试
+
+**监控与安全**
+
+- `@sentry/nextjs` - 错误追踪
+- `pino` - 结构化日志
+- `@upstash/ratelimit` - 速率限制
+- `isomorphic-dompurify` - XSS防护
+
+**多数据源支持**
+
+- `pg` - PostgreSQL
+- `mysql2` - MySQL
+- `mongodb` - MongoDB
+- `ioredis` - Redis
 
 **后端库**
 
@@ -325,11 +385,49 @@ nextjs-universal-template/
 
 ### 📊 数据看板
 
-- ✅ 创建/编辑/删除看板
-- ✅ 多种图表类型
-- ✅ ECharts + Recharts
-- ✅ 响应式布局
-- ✅ 数据源管理
+- ✅ 拖拽式布局编辑
+- ✅ 30+图表类型支持
+- ✅ Dashboard模板库
+- ✅ 实时数据刷新(SSE)
+- ✅ 分享和嵌入功能
+- ✅ 响应式自适应
+
+</td>
+<td width="33%" align="center">
+
+### 🔍 SQL查询编辑器
+
+- ✅ Monaco Editor集成
+- ✅ 语法高亮补全
+- ✅ 查询历史记录
+- ✅ 收藏常用查询
+- ✅ 结果导出(CSV/Excel)
+- ✅ Redis查询缓存
+
+</td>
+</tr>
+<tr>
+<td width="33%" align="center">
+
+### 🗄️ 多数据源支持
+
+- ✅ PostgreSQL连接
+- ✅ MySQL连接
+- ✅ MongoDB连接
+- ✅ Schema自动发现
+- ✅ 表结构可视化
+- ✅ 数据预览浏览
+
+</td>
+<td width="34%" align="center">
+
+### 🧪 测试覆盖
+
+- ✅ Vitest单元测试
+- ✅ Playwright E2E
+- ✅ 测试覆盖率报告
+- ✅ 组件测试示例
+- ✅ API测试示例
 
 </td>
 <td width="33%" align="center">
@@ -338,9 +436,9 @@ nextjs-universal-template/
 
 - ✅ 用户列表查询
 - ✅ 用户信息更新
-- ✅ 用户删除 (Admin)
+- ✅ RBAC权限控制
+- ✅ 审计日志记录
 - ✅ 角色权限管理
-- ✅ 个人资料编辑
 
 </td>
 </tr>
@@ -522,6 +620,30 @@ pnpm format       # Prettier 格式化
 </td>
 <td width="33%">
 
+**🧪 测试**
+
+```bash
+pnpm test         # 运行单元测试
+pnpm test:ui      # 测试UI界面
+pnpm test:coverage # 测试覆盖率
+pnpm test:e2e     # E2E测试
+```
+
+</td>
+</tr>
+<tr>
+<td width="33%">
+
+**📊 Dashboard页面**
+
+- `/` - 首页
+- `/dashboard` - 数据看板
+- `/dashboards` - 看板管理
+- `/dashboards/[id]` - 看板详情
+
+</td>
+<td width="33%">
+
 **🗄️ 数据库**
 
 ```bash
@@ -531,6 +653,15 @@ pnpm db:migrate   # 运行迁移
 pnpm db:studio    # Drizzle Studio
 pnpm db:seed      # 填充数据
 ```
+
+</td>
+<td width="34%">
+
+**🔍 查询页面**
+
+- `/query` - SQL编辑器
+- `/explore` - 数据探索
+- `/data-sources` - 数据源管理
 
 </td>
 </tr>
@@ -545,10 +676,13 @@ pnpm db:seed      # 填充数据
 
 - `universal_users` - 用户表
 - `universal_roles` - 角色表
+- `universal_permissions` - 权限表
+- `universal_role_permissions` - 角色权限关联
 - `universal_sessions` - 会话表
 - `universal_dashboards` - 看板表
 - `universal_widgets` - 组件表
 - `universal_data_sources` - 数据源表
+- `universal_audit_logs` - 审计日志表
 
 </details>
 
@@ -574,6 +708,33 @@ pnpm db:seed      # 填充数据
 - `dashboard.create` - 创建看板
 - `dashboard.update` - 更新看板
 - `dashboard.delete` - 删除看板
+
+**SQL查询**
+
+- `query.execute` - 执行SQL查询
+- `query.getHistory` - 获取查询历史
+- `query.saveFavorite` - 保存收藏查询
+- `query.clearCache` - 清除查询缓存
+
+**数据源管理**
+
+- `dataSource.list` - 列出数据源
+- `dataSource.create` - 创建数据源
+- `dataSource.testConnection` - 测试连接
+- `dataSource.getSchemas` - 获取Schema列表
+- `dataSource.getTables` - 获取表列表
+- `dataSource.getTableSchema` - 获取表结构
+- `dataSource.previewTable` - 预览表数据
+
+**权限管理**
+
+- `permission.list` - 获取权限列表
+- `permission.getRolePermissions` - 获取角色权限
+
+**审计日志**
+
+- `auditLog.list` - 获取审计日志
+- `auditLog.create` - 创建日志记录
 
 </details>
 
