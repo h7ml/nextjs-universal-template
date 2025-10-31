@@ -1,12 +1,16 @@
 /**
  * tRPC API handler for Next.js App Router
+ * 
+ * Note: Using Node.js runtime to support database drivers (pg, mysql2, mongodb)
+ * which require Node.js core modules (fs, path, stream, etc.)
  */
 
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "@/server/routers/_app";
 import { createContext } from "@/server/context";
 
-export const runtime = "edge"; // 使用 Edge Runtime
+// Use Node.js runtime for database adapters compatibility
+export const runtime = "nodejs";
 
 const handler = (req: Request) =>
   fetchRequestHandler({

@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD036 -->
+
 <div align="center">
 
 # 🚀 Next.js Universal Template
