@@ -37,11 +37,14 @@ export class PostgreSQLAdapter implements IDataSourceAdapter {
       this.connected = true;
       this.lastError = undefined;
 
-      log.info({ dataSourceId: this.config.id }, 'PostgreSQL connected');
+      log.info('PostgreSQL connected', { dataSourceId: this.config.id });
     } catch (error: any) {
       this.connected = false;
       this.lastError = error.message;
-      log.error({ error: error.message, dataSourceId: this.config.id }, 'PostgreSQL connection failed');
+      log.error('PostgreSQL connection failed', {
+        error: error.message,
+        dataSourceId: this.config.id,
+      });
       throw error;
     }
   }
@@ -51,7 +54,7 @@ export class PostgreSQLAdapter implements IDataSourceAdapter {
       await this.pool.end();
       this.pool = null;
       this.connected = false;
-      log.info({ dataSourceId: this.config.id }, 'PostgreSQL disconnected');
+      log.info('PostgreSQL disconnected', { dataSourceId: this.config.id });
     }
   }
 

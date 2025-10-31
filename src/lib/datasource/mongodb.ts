@@ -34,11 +34,14 @@ export class MongoDBAdapter implements IDataSourceAdapter {
       this.connected = true;
       this.lastError = undefined;
 
-      log.info({ dataSourceId: this.config.id }, 'MongoDB connected');
+      log.info('MongoDB connected', { dataSourceId: this.config.id });
     } catch (error: any) {
       this.connected = false;
       this.lastError = error.message;
-      log.error({ error: error.message, dataSourceId: this.config.id }, 'MongoDB connection failed');
+      log.error('MongoDB connection failed', {
+        error: error.message,
+        dataSourceId: this.config.id,
+      });
       throw error;
     }
   }
@@ -49,7 +52,7 @@ export class MongoDBAdapter implements IDataSourceAdapter {
       this.client = null;
       this.db = null;
       this.connected = false;
-      log.info({ dataSourceId: this.config.id }, 'MongoDB disconnected');
+      log.info('MongoDB disconnected', { dataSourceId: this.config.id });
     }
   }
 

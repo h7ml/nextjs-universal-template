@@ -50,7 +50,10 @@ export default function QueryPage() {
       };
       setHistory((prev) => [historyItem, ...prev]);
 
-      log.info({ cached: result.cached, rowCount: result.rowCount }, 'Query executed successfully');
+      log.info('Query executed successfully', {
+        cached: result.cached,
+        rowCount: result.rowCount,
+      });
     } catch (err: any) {
       const errorMessage = err.message || 'Query execution failed';
       setError(errorMessage);
@@ -66,7 +69,9 @@ export default function QueryPage() {
       };
       setHistory((prev) => [historyItem, ...prev]);
 
-      log.error({ error: errorMessage }, 'Query execution failed');
+      log.error('Query execution failed', {
+        error: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }

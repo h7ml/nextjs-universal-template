@@ -83,15 +83,37 @@ export const safeUrl = z.string().transform((val) => {
  * 生成随机token（用于CSRF等）
  */
 export function generateSecureToken(length: number = 32): string {
-  const array = new Uint8Array(length);
-  if (typeof window !== 'undefined' && window.crypto) {
-    window.crypto.getRandomValues(array);
-  } else {
-    // Node.js环境
-    const crypto = require('crypto');
-    crypto.randomFillSync(array);
+  if (!Number.isInteger(length) || length <= 0) {
+    throw new Error('Token length must be a positive integer');
   }
-  return Buffer.from(array).toString('base64url');
+
+  const cryptoObj = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined;
+
+  if (!cryptoObj || typeof cryptoObj.getRandomValues !== 'function') {
+    throw new Error('Secure crypto module is not available in this environment');
+  }
+
+  const bytes = new Uint8Array(length);
+  cryptoObj.getRandomValues(bytes);
+
+  return bytesToBase64Url(bytes);
+}
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes).toString('base64url');
+  }
+
+  if (typeof btoa === 'function') {
+    let binary = '';
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  throw new Error('Base64 encoding is not supported in the current environment');
 }
 
 /**

@@ -38,11 +38,14 @@ export class MySQLAdapter implements IDataSourceAdapter {
       this.connected = true;
       this.lastError = undefined;
 
-      log.info({ dataSourceId: this.config.id }, 'MySQL connected');
+      log.info('MySQL connected', { dataSourceId: this.config.id });
     } catch (error: any) {
       this.connected = false;
       this.lastError = error.message;
-      log.error({ error: error.message, dataSourceId: this.config.id }, 'MySQL connection failed');
+      log.error('MySQL connection failed', {
+        error: error.message,
+        dataSourceId: this.config.id,
+      });
       throw error;
     }
   }
@@ -52,7 +55,7 @@ export class MySQLAdapter implements IDataSourceAdapter {
       await this.pool.end();
       this.pool = null;
       this.connected = false;
-      log.info({ dataSourceId: this.config.id }, 'MySQL disconnected');
+      log.info('MySQL disconnected', { dataSourceId: this.config.id });
     }
   }
 

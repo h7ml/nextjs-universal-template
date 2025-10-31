@@ -11,15 +11,50 @@ import { db } from '@/db';
 import { sql } from 'drizzle-orm';
 import crypto from 'crypto';
 import { log } from '@/lib/logger';
-
-// Redis缓存（可选）
-let redis: any;
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  const { Redis } = require('@upstash/redis');
-  redis = Redis.fromEnv();
-}
+import type { Redis } from '@upstash/redis';
 
 const CACHE_TTL = 300; // 5分钟缓存
+
+type RedisClient = Redis;
+type CachedQueryPayload = {
+  data: any[];
+  columns: string[];
+  rowCount: number;
+};
+
+let redisClientPromise: Promise<RedisClient | null> | null = null;
+
+async function getRedisClient(): Promise<RedisClient | null> {
+  const hasRedisConfig = Boolean(
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  );
+
+  if (!hasRedisConfig) {
+    return null;
+  }
+
+  if (!redisClientPromise) {
+    redisClientPromise = import('@upstash/redis')
+      .then(({ Redis }) => {
+        try {
+          return Redis.fromEnv();
+        } catch (error) {
+          log.warn('Failed to initialize Redis client from environment', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        }
+      })
+      .catch((error) => {
+        log.warn('Failed to load @upstash/redis', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      });
+  }
+
+  return redisClientPromise;
+}
 
 export const queryRouter = router({
   // 执行SQL查询
@@ -32,6 +67,7 @@ export const queryRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const startTime = Date.now();
+      const redis = input.useCache ? await getRedisClient() : null;
 
       try {
         // 基本SQL验证（禁止危险操作）
@@ -53,20 +89,39 @@ export const queryRouter = router({
         // 检查缓存
         if (input.useCache && redis) {
           try {
-            const cached = await redis.get(cacheKey);
-            if (cached) {
-              log.debug({ cacheKey }, 'Query cache hit');
-              return {
-                success: true,
-                data: cached.data,
-                columns: cached.columns,
-                rowCount: cached.rowCount,
-                duration: Date.now() - startTime,
-                cached: true,
-              };
+            const cachedRaw = await redis.get<string>(cacheKey);
+
+            if (cachedRaw) {
+              let cached: CachedQueryPayload | null = null;
+
+              try {
+                cached = typeof cachedRaw === 'string'
+                  ? (JSON.parse(cachedRaw) as CachedQueryPayload)
+                  : (cachedRaw as unknown as CachedQueryPayload);
+              } catch (parseError) {
+                log.warn('Failed to parse cached query payload', {
+                  cacheKey,
+                  error: parseError instanceof Error ? parseError.message : String(parseError),
+                });
+              }
+
+              if (cached) {
+                log.debug('Query cache hit', { cacheKey });
+                return {
+                  success: true,
+                  data: cached.data,
+                  columns: cached.columns,
+                  rowCount: cached.rowCount,
+                  duration: Date.now() - startTime,
+                  cached: true,
+                };
+              }
             }
           } catch (cacheError) {
-            log.warn({ error: cacheError }, 'Cache read error');
+            log.warn('Cache read error', {
+              cacheKey,
+              error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+            });
           }
         }
 
@@ -79,14 +134,19 @@ export const queryRouter = router({
         // 保存到缓存
         if (input.useCache && redis && data.length > 0) {
           try {
-            await redis.set(cacheKey, {
+            const payload: CachedQueryPayload = {
               data,
               columns,
               rowCount: data.length,
-            }, { ex: CACHE_TTL });
-            log.debug({ cacheKey, ttl: CACHE_TTL }, 'Query result cached');
+            };
+
+            await redis.set(cacheKey, JSON.stringify(payload), { ex: CACHE_TTL });
+            log.debug('Query result cached', { cacheKey, ttl: CACHE_TTL });
           } catch (cacheError) {
-            log.warn({ error: cacheError }, 'Cache write error');
+            log.warn('Cache write error', {
+              cacheKey,
+              error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+            });
           }
         }
 
@@ -95,12 +155,12 @@ export const queryRouter = router({
         // 记录到历史
         // TODO: 保存到数据库的查询历史表
 
-        log.info({
+        log.info('Query executed', {
           userId: ctx.user.id,
           sql: input.sql,
           rowCount: data.length,
           duration,
-        }, 'Query executed');
+        });
 
         return {
           success: true,
@@ -113,12 +173,12 @@ export const queryRouter = router({
       } catch (error: any) {
         const duration = Date.now() - startTime;
 
-        log.error({
+        log.error('Query execution failed', {
           userId: ctx.user.id,
           sql: input.sql,
           error: error.message,
           duration,
-        }, 'Query execution failed');
+        });
 
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -154,11 +214,11 @@ export const queryRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       // TODO: 保存到数据库
-      log.info({
+      log.info('Query saved to favorites', {
         userId: ctx.user.id,
         sql: input.sql,
         name: input.name,
-      }, 'Query saved to favorites');
+      });
 
       return {
         success: true,
@@ -180,10 +240,10 @@ export const queryRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       // TODO: 从数据库删除
-      log.info({
+      log.info('Query removed from favorites', {
         userId: ctx.user.id,
         favoriteId: input.id,
-      }, 'Query removed from favorites');
+      });
 
       return { success: true };
     }),
@@ -192,6 +252,8 @@ export const queryRouter = router({
   clearCache: protectedProcedure
     .input(z.object({ pattern: z.string().optional() }))
     .mutation(async ({ input }) => {
+      const redis = await getRedisClient();
+
       if (!redis) {
         return { success: false, message: 'Redis not configured' };
       }
@@ -203,7 +265,7 @@ export const queryRouter = router({
         
         if (keys.length > 0) {
           await redis.del(...keys);
-          log.info({ pattern, count: keys.length }, 'Query cache cleared');
+          log.info('Query cache cleared', { pattern, count: keys.length });
         }
 
         return {
@@ -211,7 +273,9 @@ export const queryRouter = router({
           clearedCount: keys.length,
         };
       } catch (error: any) {
-        log.error({ error: error.message }, 'Failed to clear cache');
+        log.error('Failed to clear cache', {
+          error: error.message,
+        });
         return {
           success: false,
           message: error.message,
