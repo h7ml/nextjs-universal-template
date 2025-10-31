@@ -10,12 +10,13 @@ import { TRPCError } from '@trpc/server';
 import { db } from '@/db';
 import { sql } from 'drizzle-orm';
 import crypto from 'crypto';
+import { Redis } from '@upstash/redis';
 import { log } from '@/lib/logger';
 
 // Redis缓存（可选）
-let redis: any;
+type RedisClient = ReturnType<typeof Redis.fromEnv>;
+let redis: RedisClient | null = null;
 if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  const { Redis } = require('@upstash/redis');
   redis = Redis.fromEnv();
 }
 

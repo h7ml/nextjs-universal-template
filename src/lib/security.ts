@@ -84,13 +84,13 @@ export const safeUrl = z.string().transform((val) => {
  */
 export function generateSecureToken(length: number = 32): string {
   const array = new Uint8Array(length);
-  if (typeof window !== 'undefined' && window.crypto) {
-    window.crypto.getRandomValues(array);
+
+  if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
+    globalThis.crypto.getRandomValues(array);
   } else {
-    // Node.js环境
-    const crypto = require('crypto');
-    crypto.randomFillSync(array);
+    throw new Error('Secure random generator is not available in this environment');
   }
+
   return Buffer.from(array).toString('base64url');
 }
 
