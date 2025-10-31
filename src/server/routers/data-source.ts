@@ -16,6 +16,16 @@ import { adminProcedure, router, protectedProcedure } from "../trpc";
 import { DataSourceFactory } from "@/lib/datasource/factory";
 import type { DataSourceConfig } from "@/lib/datasource";
 import { log } from "@/lib/logger";
+import { validateSqlIdentifier } from "@/lib/security";
+
+function ensureValidIdentifier(value: string, field: string) {
+  if (!validateSqlIdentifier(value)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `${field} contains invalid characters`,
+    });
+  }
+}
 
 const listInputSchema = z.object({
   limit: z.number().min(1).max(100).default(20),
@@ -350,13 +360,26 @@ export const dataSourceRouter = router({
       const adapter = DataSourceFactory.createAdapter(config);
       try {
         let query: string;
+
         if (config.type === "mongodb") {
+          ensureValidIdentifier(input.tableName, "tableName");
+          if (input.schema) {
+            ensureValidIdentifier(input.schema, "schema");
+          }
           query = `db.${input.tableName}.find({}).limit(${input.limit})`;
         } else {
-          const tableName = input.schema
-            ? `"${input.schema}"."${input.tableName}"`
-            : `"${input.tableName}"`;
-          query = `SELECT * FROM ${tableName} LIMIT ${input.limit}`;
+          ensureValidIdentifier(input.tableName, "tableName");
+          if (input.schema) {
+            ensureValidIdentifier(input.schema, "schema");
+          }
+
+          const quotedSchema = input.schema ? `"${input.schema}"` : null;
+          const quotedTable = `"${input.tableName}"`;
+          const qualifiedTable = quotedSchema
+            ? `${quotedSchema}.${quotedTable}`
+            : quotedTable;
+
+          query = `SELECT * FROM ${qualifiedTable} LIMIT ${input.limit}`;
         }
 
         const result = await adapter.executeQuery(query);

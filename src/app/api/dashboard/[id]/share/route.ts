@@ -8,15 +8,94 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { log } from '@/lib/logger';
 import { z } from 'zod';
+import { db, dashboardShares, dashboards, users } from '@/db';
+import type { DashboardShare } from '@/db';
+import { eq } from 'drizzle-orm';
+import { hashPassword, verifyToken } from '@/server/routers/auth';
 
-// 分享配置验证
+type AuthenticatedUser = Omit<typeof users.$inferSelect, 'password'>;
+
+const MAX_EXPIRY_SECONDS = 60 * 60 * 24 * 30; // 30 days
+
 const ShareConfigSchema = z.object({
   isPublic: z.boolean(),
   allowEmbed: z.boolean().optional().default(true),
   requirePassword: z.boolean().optional().default(false),
-  password: z.string().optional(),
-  expiresIn: z.number().optional(), // 秒
+  password: z.string().min(8).max(128).optional(),
+  expiresIn: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_EXPIRY_SECONDS)
+    .optional(),
 });
+
+function formatShareResponse(share: DashboardShare, request: NextRequest) {
+  return {
+    shareId: share.shareId,
+    dashboardId: share.dashboardId,
+    isPublic: share.isPublic,
+    allowEmbed: share.allowEmbed,
+    requirePassword: share.requirePassword,
+    expiresAt: share.expiresAt ? share.expiresAt.toISOString() : null,
+    viewCount: share.viewCount,
+    shareUrl: `${request.nextUrl.origin}/public/dashboard/${share.shareId}`,
+    embedUrl: share.allowEmbed
+      ? `${request.nextUrl.origin}/embed/dashboard/${share.shareId}`
+      : null,
+  };
+}
+
+async function getAuthenticatedUser(
+  request: NextRequest
+): Promise<AuthenticatedUser | null> {
+  const authorization =
+    request.headers.get('authorization') ?? request.headers.get('Authorization');
+
+  if (!authorization?.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authorization.slice('Bearer '.length).trim();
+  if (!token) {
+    return null;
+  }
+
+  const payload = await verifyToken(token);
+  if (!payload?.userId) {
+    return null;
+  }
+
+  const userRecord = await db.query.users.findFirst({
+    where: eq(users.id, payload.userId),
+  });
+
+  if (!userRecord || !userRecord.isActive) {
+    return null;
+  }
+
+  const { password, ...userWithoutPassword } = userRecord;
+  return userWithoutPassword;
+}
+
+async function assertDashboardOwnership(
+  dashboardId: string,
+  user: AuthenticatedUser
+) {
+  const dashboard = await db.query.dashboards.findFirst({
+    where: eq(dashboards.id, dashboardId),
+  });
+
+  if (!dashboard) {
+    return { status: 404 as const, message: 'Dashboard not found' };
+  }
+
+  if (dashboard.createdBy !== user.id) {
+    return { status: 403 as const, message: 'Forbidden' };
+  }
+
+  return { status: 200 as const, dashboard };
+}
 
 /**
  * 创建或更新Dashboard分享配置
@@ -28,58 +107,101 @@ export async function POST(
 ) {
   try {
     const dashboardId = params.id;
-    const body = await request.json();
+    const user = await getAuthenticatedUser(request);
 
-    // 验证输入
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const ownership = await assertDashboardOwnership(dashboardId, user);
+    if (ownership.status !== 200) {
+      return NextResponse.json(
+        { error: ownership.message },
+        { status: ownership.status }
+      );
+    }
+
+    const body = await request.json();
     const config = ShareConfigSchema.parse(body);
 
-    // TODO: 验证用户权限
-    // const user = await getCurrentUser(request);
-    // if (!user || !canAccessDashboard(user, dashboardId)) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const existingShare = await db.query.dashboardShares.findFirst({
+      where: eq(dashboardShares.dashboardId, dashboardId),
+    });
 
-    // 生成唯一的分享ID
-    const shareId = nanoid(16);
+    if (config.requirePassword && !config.password && !existingShare?.passwordHash) {
+      return NextResponse.json(
+        { error: 'Password is required when enabling protection' },
+        { status: 400 }
+      );
+    }
 
-    // 计算过期时间
+    let passwordHash = existingShare?.passwordHash ?? null;
+    if (config.requirePassword) {
+      if (config.password) {
+        passwordHash = await hashPassword(config.password);
+      }
+    } else {
+      passwordHash = null;
+    }
+
     const expiresAt = config.expiresIn
       ? new Date(Date.now() + config.expiresIn * 1000)
       : null;
 
-    // TODO: 保存到数据库
-    // await db.insert(dashboardShares).values({
-    //   dashboardId,
-    //   shareId,
-    //   isPublic: config.isPublic,
-    //   allowEmbed: config.allowEmbed,
-    //   requirePassword: config.requirePassword,
-    //   password: config.password ? await hashPassword(config.password) : null,
-    //   expiresAt,
-    //   createdAt: new Date(),
-    // });
+    const now = new Date();
+    let shareRecord: DashboardShare | undefined;
 
-    log.info('Dashboard share created', {
+    if (existingShare) {
+      const [updated] = await db
+        .update(dashboardShares)
+        .set({
+          isPublic: config.isPublic,
+          allowEmbed: config.allowEmbed ?? true,
+          requirePassword: config.requirePassword,
+          passwordHash,
+          expiresAt,
+          updatedAt: now,
+        })
+        .where(eq(dashboardShares.id, existingShare.id))
+        .returning();
+
+      shareRecord = updated;
+    } else {
+      const shareId = nanoid(16);
+      const [created] = await db
+        .insert(dashboardShares)
+        .values({
+          dashboardId,
+          shareId,
+          isPublic: config.isPublic,
+          allowEmbed: config.allowEmbed ?? true,
+          requirePassword: config.requirePassword,
+          passwordHash,
+          expiresAt,
+          viewCount: 0,
+          createdBy: user.id,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning();
+
+      shareRecord = created;
+    }
+
+    if (!shareRecord) {
+      throw new Error('Failed to persist dashboard share');
+    }
+
+    log.info('Dashboard share saved', {
       dashboardId,
-      shareId,
-      isPublic: config.isPublic,
+      shareId: shareRecord.shareId,
+      userId: user.id,
+      isPublic: shareRecord.isPublic,
     });
 
-    // 返回分享信息
     return NextResponse.json({
       success: true,
-      share: {
-        shareId,
-        dashboardId,
-        isPublic: config.isPublic,
-        allowEmbed: config.allowEmbed,
-        requirePassword: config.requirePassword,
-        expiresAt: expiresAt?.toISOString(),
-        shareUrl: `${request.nextUrl.origin}/public/dashboard/${shareId}`,
-        embedUrl: config.allowEmbed
-          ? `${request.nextUrl.origin}/embed/dashboard/${shareId}`
-          : null,
-      },
+      share: formatShareResponse(shareRecord, request),
     });
   } catch (error) {
     log.error('Failed to create dashboard share', { error });
@@ -108,26 +230,32 @@ export async function GET(
 ) {
   try {
     const dashboardId = params.id;
+    const user = await getAuthenticatedUser(request);
 
-    // TODO: 从数据库查询
-    // const share = await db.query.dashboardShares.findFirst({
-    //   where: eq(dashboardShares.dashboardId, dashboardId),
-    // });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // 模拟数据
-    const share = {
-      shareId: 'example-share-id',
-      dashboardId,
-      isPublic: true,
-      allowEmbed: true,
-      requirePassword: false,
-      expiresAt: null,
-      viewCount: 0,
-      shareUrl: `${request.nextUrl.origin}/public/dashboard/example-share-id`,
-      embedUrl: `${request.nextUrl.origin}/embed/dashboard/example-share-id`,
-    };
+    const ownership = await assertDashboardOwnership(dashboardId, user);
+    if (ownership.status !== 200) {
+      return NextResponse.json(
+        { error: ownership.message },
+        { status: ownership.status }
+      );
+    }
 
-    return NextResponse.json({ share });
+    const share = await db.query.dashboardShares.findFirst({
+      where: eq(dashboardShares.dashboardId, dashboardId),
+    });
+
+    if (!share) {
+      return NextResponse.json(
+        { error: 'Share not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ share: formatShareResponse(share, request) });
   } catch (error) {
     log.error('Failed to get dashboard share', { error });
     return NextResponse.json(
@@ -147,13 +275,38 @@ export async function DELETE(
 ) {
   try {
     const dashboardId = params.id;
+    const user = await getAuthenticatedUser(request);
 
-    // TODO: 验证权限并删除
-    // await db.delete(dashboardShares).where(
-    //   eq(dashboardShares.dashboardId, dashboardId)
-    // );
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    log.info('Dashboard share deleted', { dashboardId });
+    const ownership = await assertDashboardOwnership(dashboardId, user);
+    if (ownership.status !== 200) {
+      return NextResponse.json(
+        { error: ownership.message },
+        { status: ownership.status }
+      );
+    }
+
+    const share = await db.query.dashboardShares.findFirst({
+      where: eq(dashboardShares.dashboardId, dashboardId),
+    });
+
+    if (!share) {
+      return NextResponse.json(
+        { error: 'Share not found' },
+        { status: 404 }
+      );
+    }
+
+    await db.delete(dashboardShares).where(eq(dashboardShares.id, share.id));
+
+    log.info('Dashboard share deleted', {
+      dashboardId,
+      shareId: share.shareId,
+      userId: user.id,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

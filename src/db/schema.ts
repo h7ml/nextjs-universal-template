@@ -19,6 +19,7 @@ import {
   varchar,
   integer,
   primaryKey,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -105,6 +106,33 @@ export const dashboards = pgTable("universal_dashboards", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const dashboardShares = pgTable(
+  "universal_dashboard_shares",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    dashboardId: uuid("dashboard_id")
+      .notNull()
+      .references(() => dashboards.id, { onDelete: "cascade" }),
+    shareId: varchar("share_id", { length: 64 }).notNull(),
+    isPublic: boolean("is_public").notNull().default(false),
+    allowEmbed: boolean("allow_embed").notNull().default(true),
+    requirePassword: boolean("require_password").notNull().default(false),
+    passwordHash: text("password_hash"),
+    expiresAt: timestamp("expires_at"),
+    viewCount: integer("view_count").notNull().default(0),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    shareIdIdx: uniqueIndex("universal_dashboard_shares_share_id_idx").on(
+      table.shareId
+    ),
+  })
+);
+
 // Chart Widgets
 export const widgets = pgTable("universal_widgets", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -188,12 +216,24 @@ export const usersRelations = relations(users, ({ one }) => ({
 
 export const dashboardsRelations = relations(dashboards, ({ many }) => ({
   widgets: many(widgets),
+  shares: many(dashboardShares),
 }));
 
 export const widgetsRelations = relations(widgets, ({ one }) => ({
   dashboard: one(dashboards, {
     fields: [widgets.dashboardId],
     references: [dashboards.id],
+  }),
+}));
+
+export const dashboardSharesRelations = relations(dashboardShares, ({ one }) => ({
+  dashboard: one(dashboards, {
+    fields: [dashboardShares.dashboardId],
+    references: [dashboards.id],
+  }),
+  owner: one(users, {
+    fields: [dashboardShares.createdBy],
+    references: [users.id],
   }),
 }));
 
@@ -223,3 +263,5 @@ export type DataSource = typeof dataSources.$inferSelect;
 export type NewDataSource = typeof dataSources.$inferInsert;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
+export type DashboardShare = typeof dashboardShares.$inferSelect;
+export type NewDashboardShare = typeof dashboardShares.$inferInsert;

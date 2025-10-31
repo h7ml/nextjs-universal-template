@@ -20,6 +20,38 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
 }
 
 const CACHE_TTL = 300; // 5分钟缓存
+const ALLOWED_STATEMENT_PREFIXES = [
+  'SELECT',
+  'WITH',
+  'SHOW',
+  'DESCRIBE',
+  'EXPLAIN',
+  'ANALYZE',
+];
+const DANGEROUS_KEYWORDS = [
+  'DROP',
+  'TRUNCATE',
+  'DELETE',
+  'UPDATE',
+  'INSERT',
+  'ALTER',
+  'CREATE',
+  'GRANT',
+  'REVOKE',
+];
+
+function stripSqlComments(sqlText: string): string {
+  return sqlText
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--.*$/gm, ' ');
+}
+
+function removeStringLiterals(sqlText: string): string {
+  return sqlText
+    .replace(/'(?:''|[^'])*'/g, ' ')
+    .replace(/"(?:""|[^"])*"/g, ' ')
+    .replace(/`(?:``|[^`])*`/g, ' ');
+}
 
 export const queryRouter = router({
   // 执行SQL查询
@@ -34,12 +66,40 @@ export const queryRouter = router({
       const startTime = Date.now();
 
       try {
-        // 基本SQL验证（禁止危险操作）
-        const normalizedSql = input.sql.trim().toUpperCase();
-        const dangerousKeywords = ['DROP', 'TRUNCATE', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE'];
-        
-        for (const keyword of dangerousKeywords) {
-          if (normalizedSql.startsWith(keyword)) {
+        const trimmedSql = input.sql.trim();
+        if (!trimmedSql) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'SQL query cannot be empty',
+          });
+        }
+
+        const sanitizedForAnalysis = removeStringLiterals(
+          stripSqlComments(trimmedSql)
+        );
+        const statements = sanitizedForAnalysis
+          .split(';')
+          .map((stmt) => stmt.trim())
+          .filter(Boolean);
+
+        if (statements.length !== 1) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only a single query statement is allowed',
+          });
+        }
+
+        const firstToken = statements[0].split(/\s+/)[0]?.toUpperCase();
+        if (!firstToken || !ALLOWED_STATEMENT_PREFIXES.includes(firstToken)) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: `${firstToken ?? 'This'} statement type is not allowed in query editor`,
+          });
+        }
+
+        const upperSanitized = sanitizedForAnalysis.toUpperCase();
+        for (const keyword of DANGEROUS_KEYWORDS) {
+          if (new RegExp(`\\b${keyword}\\b`).test(upperSanitized)) {
             throw new TRPCError({
               code: 'FORBIDDEN',
               message: `${keyword} operations are not allowed in query editor`,
